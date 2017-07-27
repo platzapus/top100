@@ -1,0 +1,122 @@
+//One component, houses table of 100 fCC users. At least 3 columns: Username, Brownies in past 30, Brownies overall.
+
+
+
+class Tophundo extends React.Component{
+  constructor (props) {
+    super(props);
+    this.state={
+      listed: null,
+      howSort: "recent"
+    };
+    this.fetchList = this.fetchList.bind(this);
+    this.changeSort = this.changeSort.bind(this);
+  }
+  componentDidMount () {
+    this.fetchList(this.state.howSort);
+    console.log('didmount');
+  }
+  componentDidUpdate(){
+    this.fetchList(this.state.howSort);
+  }
+  changeSort (howSort){
+    this.setState({howSort: howSort},function(){console.log(this.state.howSort)});
+    if(howSort == "recent"){
+      $('#monthly').css('background-color','green');
+      $('#monthly').css('color','white');
+      $('#monthly').html('Past Month Brownies <i class="fa fa-caret-down"></i>');
+      $('#total').css('background-color','lightgray');
+      $('#total').css('color','black');
+      $('#total').html('Total Brownies');
+    }
+    else if(howSort == 'alltime'){
+      $('#monthly').css('background-color','lightgray');
+      $('#monthly').css('color','black');
+      $('#monthly').html('Past Month Brownies');
+      $('#total').css('background-color','green');
+      $('#total').css('color','white');
+      $('#total').html('Total Brownies <i class="fa fa-caret-down"></i>');
+    }
+  }
+  fetchList (sortPick){
+
+    $.ajax({
+      url: 'https://fcctop100.herokuapp.com/api/fccusers/top/' + sortPick,
+      dataType: 'json',
+      cache: false,
+      success: function(data) {
+        let listed = data;
+        if(JSON.stringify(this.state.listed) != JSON.stringify(listed)){
+          this.setState({listed: listed});
+        }
+      }.bind(this)
+    });
+    
+    
+     /* .then(function(data){
+      console.log(data);
+        this.setState(function() {;
+          return {
+            listed: data
+          }
+        })
+      });*/
+    
+ 
+    
+  }
+  render(){
+    console.log('rendering...');
+    return(
+      <div>
+        {!this.state.listed 
+         ? <div>haHAA</div> //Make a <Loading /> component you lazy asshole.
+         : <TableMaker listed={this.state.listed} changeSort={this.changeSort} type={this.state.howSort} />}
+        </div>
+    )
+    
+   
+  }
+  
+}
+
+class TableMaker extends React.Component {
+  render(){
+    //console.log(this.props.type);
+    return (<div className='container'>
+        <h3><i className="fa fa-free-code-camp"></i> freeCodeCamp Leaderboard</h3>
+      <table>
+        <tr>
+          <th>Rank</th>
+          <th>Username</th>
+          <th id="monthly" onClick={this.props.changeSort.bind(this,'recent')}>Past Month Brownies <i className="fa fa-caret-down"></i></th>
+          <th id="total" onClick={this.props.changeSort.bind(this,'alltime')}>Total Brownies</th>
+        </tr>
+        {this.props.listed.map(function(list, index){
+          return (
+            <tr>
+              <td>{index + 1}</td>
+              <td className = 'users'><a href={"https://www.freecodecamp.com/" +list.username}><img src={list.img} />  {list.username}</a></td>
+              <td>{list.recent}</td>
+              <td>{list.alltime}</td>
+            </tr>
+          )
+        })}
+      </table>
+     </div>
+    )
+  
+  }
+}
+
+
+ReactDOM.render(
+  <Tophundo />,
+  document.getElementById('app')
+);
+
+//Next steps:
+//1.Create state switcher function
+//2.Pass function to TableMaker and apply through onclick to Past Month and Total Brownie headers
+//3.Create second api call to cover Total Brownies sort (or implement to current one?)
+//4.Loading component
